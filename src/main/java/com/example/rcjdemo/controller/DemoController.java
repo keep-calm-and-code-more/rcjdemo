@@ -15,7 +15,7 @@ public class DemoController {
         this.demoService = demoService;
     }
 
-    @PostMapping("demo1")
+    @GetMapping("demo1")
     public String demoOne(@RequestParam Map<String,Object> data){
         // ...
         return demoService.demoOne(data);

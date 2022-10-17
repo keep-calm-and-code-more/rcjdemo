@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
+@SpringBootApplication
+@tk.mybatis.spring.annotation.MapperScan(basePackages = "com.example.rcjdemo.dao")
 public class RcjdemoApplication {
 
     @RequestMapping("/")
