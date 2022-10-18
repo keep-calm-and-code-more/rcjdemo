@@ -50,3 +50,11 @@ mybatis:
   configuration:
     # 开启Sql日志记录
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 区块链配置
+repchain:
+  # 网络标识
+  chainNetworkId: identity-net
+  # 区块链地址
+  host: 192.168.2.76:9081
+  # 需要同步的区块初始高度
+  blockHeight: 0
