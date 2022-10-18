@@ -23,3 +23,4 @@ public class DemoServiceImpl implements DemoService {
         return JSONUtil.toJsonPrettyStr(userDao.getTableList());
     }
 }
+
