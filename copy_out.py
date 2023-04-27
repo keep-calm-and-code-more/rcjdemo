@@ -19,5 +19,5 @@ if __name__ == '__main__':
     else:
         rcfolder = argv[1]
         ccopy(rcfolder, "conf/genesis.conf")
-        # ccopy(rcfolder, "src/main/scala/rep/sc/tpl/CREvidence.scala")
+        # ccopy(rcfolder, "src/main/scala/rep/sc/tpl/ContractRCJDemo.scala")
         ccopy(rcfolder, "json/identity-net/genesis.json")
