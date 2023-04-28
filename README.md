@@ -19,7 +19,7 @@
 运行RcjdemoApplicationTests提交数据的同时会启动RcjdemoApplication，开启同步。
 
 
-
+两个.py文件目前用不到，请忽视。
 
 
 使用时请注意分支需与RepChain配套。
