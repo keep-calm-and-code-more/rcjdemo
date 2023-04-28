@@ -19,7 +19,7 @@ spring:
     druid:
       # 配置sqlite文件路径，需要填写绝对路径，推荐将sqlite文件放入到服务器上，而非程序jar包或war包中
       driver-class-name: com.mysql.jdbc.Driver
-      url: jdbc:mysql://192.168.2.76:3306/RCJDEMO?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+      url: jdbc:mysql://127.0.0.1:3306/RCJDEMO?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
       username: root
       password: root
       #使用Druid数据源
@@ -52,9 +52,7 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 # 区块链配置
 repchain:
-  # 网络标识
-  chainNetworkId: identity-net
   # 区块链地址
-  host: 192.168.2.76:9081
+  host: 127.0.0.1:9081
   # 需要同步的区块初始高度
   blockHeight: 0
