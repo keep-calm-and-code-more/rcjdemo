@@ -19,7 +19,7 @@ spring:
     druid:
       # 配置sqlite文件路径，需要填写绝对路径，推荐将sqlite文件放入到服务器上，而非程序jar包或war包中
       driver-class-name: com.mysql.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1:3306/RCJDEMO?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+      url: jdbc:mysql://192.168.199.18:3306/RCJDEMO?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
       username: root
       password: root
       #使用Druid数据源
@@ -44,6 +44,10 @@ spring:
           merge-sql: false
       # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
       connectionProperties: druid.stat.slowSqlMillis=5000
+  # 暂时不连接数据库
+  sql:
+    init:
+      mode: never
 mybatis:
   mapper-locations: classpath*:mapping/*.xml
   type-aliases-package: com.example.rcjdemo.**.entity
@@ -53,6 +57,6 @@ mybatis:
 # 区块链配置
 repchain:
   # 区块链地址
-  host: 127.0.0.1:9081
+  host: 127.0.0.1:19082
   # 需要同步的区块初始高度
   blockHeight: 0

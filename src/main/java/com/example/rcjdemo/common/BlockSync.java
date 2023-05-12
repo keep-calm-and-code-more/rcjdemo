@@ -77,6 +77,7 @@ public class BlockSync implements SyncListener {
     /**
      * 用于解析获取到的区块数据，对应RepChain上的接口/block/$idx返回的数据
      * 如需要得到链上数据，请修改此方法内部逻辑来进行解析、持久化到业务数据库
+     *
      * @param block
      * @throws SyncBlockException
      */
@@ -89,7 +90,7 @@ public class BlockSync implements SyncListener {
             for (int i = 0; i < txList.size(); i++) {
                 Peer.Transaction tx = txList.get(i);
                 Peer.TransactionResult txResult = txResultList.get(i);
-                if (!StrUtil.equals(tx.getCid().getChaincodeName(), "CREvidence")) {
+                if (!(tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE && StrUtil.equals(tx.getCid().getChaincodeName(), "CREvidence"))) {
 //                    System.out.println(tx.getCid().getChaincodeName());
                     continue;
                 }
@@ -97,7 +98,7 @@ public class BlockSync implements SyncListener {
                     JSONObject argobj = tx.getIpt().getArgsCount() > 0 ? JSONUtil.parseObj(tx.getIpt().getArgsList().get(0)) : null;
                     ParsedTx ptx = ParsedTx.builder()
                             .inBlockHeight(block.getHeight())
-                            .idxInBlock(i)
+                            .idxInBlock(i+1)
                             .txid(tx.getId())
                             .tx(tx)
                             .contractName(tx.getCid().getChaincodeName())
@@ -105,7 +106,7 @@ public class BlockSync implements SyncListener {
                             .funcName(tx.getIpt().getFunction())
                             .argJSONObject(argobj)
                             .txResult(txResult)
-                            .txSubmitter(tx.getSignature().getCertId().getCreditCode()+"|"+tx.getSignature().getCertId().getCertName())
+                            .txSubmitter(tx.getSignature().getCertId().getCreditCode() + "|" + tx.getSignature().getCertId().getCertName())
                             .successFlag(txResult.getOlList().size() > 0)
                             .build();
                     if (ptx.getSuccessFlag()) { // 可忽略未成功执行的tx

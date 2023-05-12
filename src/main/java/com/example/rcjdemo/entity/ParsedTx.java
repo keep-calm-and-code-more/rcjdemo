@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ParsedTx {
     private String txid;
-    private int idxInBlock;
-    private long inBlockHeight;  //
+    private int idxInBlock; // 为区块中第几个交易，从1开始
+    private long inBlockHeight;  // 所属区块高度，从1开始
     private Peer.Transaction tx; // 签名交易原始对象
     private JSONObject argJSONObject; // 提交签名交易tx时构造的JSON参数
     private String contractName; // 智能合约名称

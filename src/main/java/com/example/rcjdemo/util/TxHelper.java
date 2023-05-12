@@ -42,10 +42,10 @@ public class TxHelper {
 
     /**
      *
-     * @param scName
-     * @param scVer
-     * @param funcName
-     * @param argDict
+     * @param scName 智能合约名称
+     * @param scVer 智能合约版本
+     * @param funcName 智能合约方法
+     * @param argDict 参数
      * @return
      */
     public Peer.Transaction callArgTx(String scName, Integer scVer, String funcName, Dict argDict){
