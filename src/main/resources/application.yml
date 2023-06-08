@@ -23,7 +23,7 @@ spring:
       username: root
       password: root
       #使用Druid数据源
-      initialSize: 5
+      initialSize: 0
       # 初始化大小，最小，最大
       minIdle: 5
       maxActive: 20
@@ -57,6 +57,6 @@ mybatis:
 # 区块链配置
 repchain:
   # 区块链地址
-  host: 127.0.0.1:19082
+  host: 192.168.199.44:9081
   # 需要同步的区块初始高度
   blockHeight: 0

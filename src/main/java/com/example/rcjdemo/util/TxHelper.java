@@ -25,14 +25,14 @@ public class TxHelper {
      *
      * @param creditCode
      * @param certName
-     * @param pkFile
+     * @param pkFile 放resources里
      * @throws IOException
      * @throws OperatorCreationException
      * @throws PKCSException
      */
     public TxHelper(String creditCode, String certName, String pkFile) throws IOException, OperatorCreationException, PKCSException {
         ClassPathResource resource = new ClassPathResource(pkFile);
-        this.privateKey = KeyUtil.generatePrivateKey(new PEMParser(resource.getReader(Charset.defaultCharset())), false, "");
+        this.privateKey = KeyUtil.generatePrivateKey(new PEMParser(resource.getReader(Charset.defaultCharset())), "");
         this.certId = Peer.CertId.newBuilder()
                 .setCreditCode(creditCode)
                 .setCertName(certName)
@@ -64,7 +64,7 @@ public class TxHelper {
                 .setCertId(certId)
                 .setChaincodeId(chaincodeId)
                 .setPrivateKey(privateKey)
-                .setSignAlgorithm("SHA1withECDSA")
+                .setSignAlgorithm("SHA256withECDSA")
                 .build();
         return invokeTran.getSignedTran();
     }

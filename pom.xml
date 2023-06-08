@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.gitee.BTAJL</groupId>
             <artifactId>RCJava-core</artifactId>
-            <version>v0.4.3-SNAPSHOT</version>
+            <version>v2.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.json4s</groupId>
