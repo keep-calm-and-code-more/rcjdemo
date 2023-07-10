@@ -17,5 +17,5 @@ import org.springframework.stereotype.Component;
 public class RepchainConfig {
     private String host;
     private Long blockHeight;
-    private String chainNetworkId;
+
 }
