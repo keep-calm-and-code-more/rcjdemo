@@ -43,10 +43,14 @@ public class TxHelper {
     /**
      * 构建superAdmin
      */
-    public TxHelper() {
-        PrivateKey super_pri = CertUtil.genX509CertPrivateKey(new File("private/jks/951002007l78123233.super_admin.jks"), "super_admin", "951002007l78123233.super_admin").getPrivateKey();
+    public TxHelper() throws IOException, OperatorCreationException, PKCSException {
+        ClassPathResource resource = new ClassPathResource("951002007l78123233.super_admin2.0.pem");
+        PrivateKey super_pri = KeyUtil.generatePrivateKey(new PEMParser(resource.getReader(Charset.defaultCharset())), "");
         superTranCreator = TranCreator.newBuilder().setPrivateKey(super_pri).setSignAlgorithm("SHA256withECDSA").build();
-        superCertId = Peer.CertId.newBuilder().setCreditCode("identity-net:951002007l78123233").setCertName("super_admin").build();
+        superCertId = Peer.CertId.newBuilder()
+                .setCreditCode("identity-net:951002007l78123233")
+                .setCertName("super_admin")
+                .build(); // 管理员签名ID
     }
 
     /**
@@ -76,7 +80,7 @@ public class TxHelper {
      * @throws OperatorCreationException
      * @throws PKCSException
      */
-    public TxHelper(String creditCode, String certName, File pkFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public TxHelper(String creditCode, String certName, File pkFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, OperatorCreationException, PKCSException {
         this();
         // 以后优化吧
         String pemString = FileUtil.readString(pkFile, StandardCharsets.UTF_8);

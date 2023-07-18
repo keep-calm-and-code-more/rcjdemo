@@ -48,8 +48,16 @@ class RcjdemoTests {
         String certName = "cert_EPAI";
         TxHelper txh= new TxHelper();
         // 证书pem字符串
-        File certPemFile = new File("private/pem/epai.cert.pem");
-        String certPem = new String(Files.readAllBytes(certPemFile.toPath()));
+        String certPem =
+                "-----BEGIN CERTIFICATE-----\n" +
+                "MIIBLzCB1qADAgECAhEh7GFgbHCjSTVeSxwRXuJibDAKBggqhkjOPQQDAjAZMRcw\n" +
+                "FQYDVQQDDA5jb3BSZWdVc2VyRVBBSTAiGA8yMDIyMDMyNTAyMTE0M1oYDzIxMjEw\n" +
+                "MzAxMDIxMTQzWjAZMRcwFQYDVQQDDA5jb3BSZWdVc2VyRVBBSTBWMBAGByqGSM49\n" +
+                "AgEGBSuBBAAKA0IABAZRRIwuTTHLwvy+Sah5t0RX5qix0ShtobpYFDMCD8FM4PgJ\n" +
+                "NmS47nogxqp1pgpYF00ra61mx3e424sW+teCPe4wCgYIKoZIzj0EAwIDSAAwRQIg\n" +
+                "K2s7S/95jXgDaYujkagUv28tq1OD7gYDhks1/wGtjcsCIQDMYjXxzFqvKltAkzNX\n" +
+                "2gbVq28+BX69qtAZFCDLX+PFDw==\n" +
+                "-----END CERTIFICATE-----";
         Peer.Certificate cert_proto = Peer.Certificate.newBuilder()
                 .setCertificate(certPem)
                 .setAlgType("sha256withecdsa")
