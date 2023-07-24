@@ -17,6 +17,7 @@ public class ParsedTx {
     private long inBlockHeight;  // 所属区块高度，从1开始
     private Peer.Transaction tx; // 签名交易原始对象
     private JSONObject argJSONObject; // 提交签名交易tx时构造的JSON参数
+    private String argObject; // 非JSON参数
     private String contractName; // 智能合约名称
     private int contractVer; // 智能合约版本
     private String funcName; // 调用的智能合约方法名称

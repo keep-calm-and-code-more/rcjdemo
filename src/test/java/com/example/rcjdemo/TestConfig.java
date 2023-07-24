@@ -11,8 +11,4 @@ public class TestConfig {
     public Dict createDict() {
         return Dict.create();
     }
-    @Bean
-    public String scOfInterest(){
-        return  "ContractAssetsTPL";
-    }
 }

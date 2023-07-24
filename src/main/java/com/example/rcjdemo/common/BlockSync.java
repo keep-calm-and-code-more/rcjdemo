@@ -35,9 +35,6 @@ public class BlockSync implements SyncListener {
     final RepchainConfig repchainConfig;
     @Autowired
     public Dict d; // 此处d仅为演示用，生产环境中应写入数据库
-    @Autowired
-    public String scOfInterest; // 用于过滤同步哪个合约的数据
-
 //    @Autowired
 //    @Profile("test")
 
@@ -99,12 +96,23 @@ public class BlockSync implements SyncListener {
             for (int i = 0; i < txList.size(); i++) {
                 Peer.Transaction tx = txList.get(i);
                 Peer.TransactionResult txResult = (Peer.TransactionResult) txResultDict.get(tx.getId());
-                if (!(tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE && StrUtil.equals(tx.getCid().getChaincodeName(), scOfInterest))) {
+                if (!(tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE)) { //此处可增加过滤条件仅过滤关注的合约
 //                    System.out.println(tx.getCid().getChaincodeName());
                     continue;
                 }
+                Peer.ChaincodeInput ipt = tx.getIpt();
+                if (ipt.getArgsCount() == 0) {
+                    continue;
+                }
+                String arg = tx.getIpt().getArgsList().get(0);
                 try {
-                    JSONObject argobj = tx.getIpt().getArgsCount() > 0 ? JSONUtil.parseObj(tx.getIpt().getArgsList().get(0)) : null;
+                    JSONObject argjsonobj = null;
+                    String argobj = null;
+                    try {
+                        argjsonobj = JSONUtil.parseObj(arg);
+                    } catch (Exception e) {
+                        argobj = arg;
+                    }
                     ParsedTx ptx = ParsedTx.builder()
                             .inBlockHeight(block.getHeader().getHeight())
                             .idxInBlock(i + 1)
@@ -113,10 +121,11 @@ public class BlockSync implements SyncListener {
                             .contractName(tx.getCid().getChaincodeName())
                             .contractVer(tx.getCid().getVersion())
                             .funcName(tx.getIpt().getFunction())
-                            .argJSONObject(argobj)
+                            .argJSONObject(argjsonobj)
+                            .argObject(argobj)
                             .txResult(txResult)
                             .txSubmitter(tx.getSignature().getCertId().getCreditCode() + "|" + tx.getSignature().getCertId().getCertName())
-                            .successFlag(txResult.getErr().getCode()==0)
+                            .successFlag(txResult.getErr().getCode() == 0)
                             .build();
                     if (ptx.getSuccessFlag()) { // 可忽略未成功执行的tx
                         // 利用ptx这一对象，可在用原业务数据库中将已经上链出块的数据打上标记，也可以写入到一个专门维护的表，包括原业务id、inBlockHeight、idxInBlock、txid、状态等字段
@@ -124,7 +133,9 @@ public class BlockSync implements SyncListener {
                         // 如有需要展示的属性，可自行从ptx获取
                         d.set(tx.getId(), ptx);
                     }
+
                 } catch (Exception e) {
+
                     throw new SyncBlockException(e);
                 }
             }
