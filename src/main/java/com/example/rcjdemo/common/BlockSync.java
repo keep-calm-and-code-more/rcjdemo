@@ -51,11 +51,13 @@ public class BlockSync implements SyncListener {
      */
     private void syncBlock() {
         String host = repchainConfig.getHost();
-        long locHeight = repchainConfig.getBlockHeight();
+        long locHeight = repchainConfig.getBlockHeight(); //从哪个区块开始同步，拟同步的区块高度的下限，在application.yml里配置
         // 获取最新区块高度
         //Map<String, Object> block = baseMapper.selectOneSql("SELECT BLOCK_HEIGHT FROM SG_OP_BLOCK ORDER BY BLOCK_HEIGHT DESC LIMIT 0,1");
-        Map<String, Object> block = new HashMap<>();
-        long tempLocHeight;
+
+        // 在实际使用中，持久化存储block，在BLOCK_HEIGHT中保存的已经同步到的区块高度，然后在这里查询得到block，能够实现程序重新运行能继续上次同步
+        Map<String, Object> block = new HashMap<>(); // 本示例为简便，直接新建的Map
+        long tempLocHeight; // 用于保存当前同步到的区块高度
         if (block != null) {
             tempLocHeight = block.get("BLOCK_HEIGHT") == null ? 0 : Math.max(locHeight, Long.parseLong(String.valueOf(block.get("BLOCK_HEIGHT"))));
         } else {
@@ -87,7 +89,8 @@ public class BlockSync implements SyncListener {
     public void onSuccess(Peer.Block block) throws SyncBlockException {
         try {
             // 将区块数据解析、持久化
-            List<Peer.Transaction> txList = block.getTransactionsList(); //Block
+            //先处理block，持久化存储block，把对应的BLOCK_HEIGHT存到数据库，用于实现程序重新运行能继续上次同步
+            List<Peer.Transaction> txList = block.getTransactionsList(); //从Block取出其中交易
             Dict txResultDict = Dict.create();
             block.getTransactionResultsList().forEach(
                     (item) -> {

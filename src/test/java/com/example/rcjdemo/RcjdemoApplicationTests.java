@@ -81,7 +81,7 @@ class RcjdemoApplicationTests {
 
 
     /**
-     * 管理员冻结功能测试,与数据提交无关
+     * 测试存证功能
      *
      * @throws IOException
      * @throws OperatorCreationException
@@ -99,7 +99,7 @@ class RcjdemoApplicationTests {
         String txid = tx.getId();
         JSONObject r = tranPostClient.postSignedTran(tx);
         System.out.println(JSONUtil.toJsonStr(r));
-        Thread.sleep(30000); // 等待BlockSync同步，上限为30s
+        Thread.sleep(30000); // 等待BlockSync同步，上限为30s所以这里设为30s，一般不会等那么久。
         assertTrue(d.containsKey(txid));
         String result = (String) queryState(randomkey, scOfInterest);
         System.out.println(result);
