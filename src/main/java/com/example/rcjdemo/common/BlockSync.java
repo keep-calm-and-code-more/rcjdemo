@@ -13,10 +13,14 @@ import com.rcjava.protos.Peer;
 import com.rcjava.sync.SyncInfo;
 import com.rcjava.sync.SyncListener;
 import com.rcjava.sync.SyncService;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.net.ssl.SSLContext;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +42,7 @@ public class BlockSync implements SyncListener {
 //    @Autowired
 //    @Profile("test")
 
-    public BlockSync(RepchainConfig repchainConfig) {
+    public BlockSync(RepchainConfig repchainConfig) throws Exception {
         this.repchainConfig = repchainConfig;
         this.syncBlock();
     }
@@ -46,7 +50,13 @@ public class BlockSync implements SyncListener {
     /**
      * 同步区块
      */
-    private void syncBlock() {
+    private void syncBlock() throws Exception{
+        //说明文档可直接参考https://gitee.com/BTAJL/RCJava-core#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E
+        //我理解需要改得地方就是用到host的地方
+        SSLContext sslContext = SSLContexts.custom()
+                .loadTrustMaterial(new File("D:\\deviceworkspace\\sensors-java\\src\\main\\resources\\jks\\121000005l35120456.node1.jks"), "123".toCharArray(), new TrustSelfSignedStrategy())
+                .loadKeyMaterial(new File("D:\\deviceworkspace\\sensors-java\\src\\main\\resources\\jks\\121000005l35120456.node1.jks"), "123".toCharArray(), "123".toCharArray())
+                .build();
         String host = repchainConfig.getHost();
         long locHeight = repchainConfig.getBlockHeight();
         // 获取最新区块高度
@@ -62,13 +72,13 @@ public class BlockSync implements SyncListener {
         if (tempLocHeight == 0) {
             syncInfo = new SyncInfo(0, "");
         } else if (tempLocHeight > 0) {
-            String locBlkHash = new ChainInfoClient(host).getBlockByHeight(tempLocHeight).getHeader().getHashPresent().toStringUtf8();
+            String locBlkHash = new ChainInfoClient(host, sslContext).getBlockByHeight(tempLocHeight).getHeader().getHashPresent().toStringUtf8();
             syncInfo = new SyncInfo(tempLocHeight, locBlkHash);
         } else {
             logger.error("本地设置区块高度不能小于0");
             throw new RuntimeException("本地设置区块高度不能小于0");
         }
-        SyncService syncService = SyncService.newBuilder().setHost(host).setSyncInfo(syncInfo).setSyncListener(this).build();
+        SyncService syncService = SyncService.newBuilder().setHost(host).setSslContext(sslContext).setSyncInfo(syncInfo).setSyncListener(this).build();
         Thread thread = new Thread(syncService::start, "SyncServiceThread");
         thread.start();
     }
