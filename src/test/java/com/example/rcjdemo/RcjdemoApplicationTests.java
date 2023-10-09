@@ -3,8 +3,6 @@ package com.example.rcjdemo;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -143,7 +140,7 @@ class RcjdemoApplicationTests {
     void testBasic() throws IOException, OperatorCreationException, PKCSException, InterruptedException {
         String scOfInterest = "ContractAssetsTPL";  //测试的是基础存证合约
 //        TxHelper txh = new TxHelper("identity-net:951002007l78123233", "super_admin", "951002007l78123233.super_admin2.0.pem");
-        TxHelper txh = new TxHelper("identity-net:jindian", "cert_identity-net:jindian", "identity-net-jindian.pem");
+        TxHelper txh = new TxHelper("identity-net:user", "cert_identity-net:user", "identity-net-user.pem");
         String randomkey = RandomUtil.randomString(10);
         Dict argDict = Dict.create()
                 .set(randomkey, "value");
@@ -391,7 +388,7 @@ class RcjdemoApplicationTests {
      */
     @Test
     void addSubmitterToRepchain() throws Exception {
-        addPersionalService("identity-net:jindian");
+        addPersionalService("identity-net:user");
     }
 
     void addPersionalService(String creditCode) throws Exception {

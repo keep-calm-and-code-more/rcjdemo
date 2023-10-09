@@ -68,7 +68,7 @@ repchain:
   serverJksPassword: 123
   # 用户自己持有的jks
 #  jksPath: D:\ideaProject\RCJava-core\jks\jdk13\121000005l35120456.node1.jks
-  jksPath: D:\ideaProject\rcjdemo\src\main\resources\jindian.jks
+  jksPath: D:\ideaProject\rcjdemo\src\main\resources\user.jks
   # 用户的jks的password
   storePassword: 123
   # 用户的私钥的password
