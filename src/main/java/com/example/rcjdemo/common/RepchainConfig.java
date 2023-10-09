@@ -27,4 +27,5 @@ public class RepchainConfig {
     private String storePassword;
     private String keyPassword;
     private String grantedCreditCode;
+    private String networkId;
 }

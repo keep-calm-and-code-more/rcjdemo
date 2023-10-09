@@ -68,7 +68,7 @@ public class CommandLineRunnerImpl implements CommandLineRunner {
             Map<String, Object> grantedMap = MapUtil.builder(new HashMap<String, Object>(8))
                     .put("id", UUID.randomUUID().toString())
                     .put("grant", repchainConfig.getCreditCode())
-                    .put("opId", new String[]{DigestUtil.sha256Hex("identity-net:"+auth)})
+                    .put("opId", new String[]{DigestUtil.sha256Hex(repchainConfig.getNetworkId()+":"+auth)})
                     .put("isTransfer", 0)
                     .put("authorizeValid", true)
                     .put("createTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))

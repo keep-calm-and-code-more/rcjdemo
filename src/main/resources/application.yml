@@ -58,6 +58,7 @@ mybatis:
 repchain:
   # 区块链地址
   host: 192.168.199.10:9081
+  networkId: identity-net
   # 需要同步的区块初始高度
   blockHeight: 0
   # 签名账户信息
