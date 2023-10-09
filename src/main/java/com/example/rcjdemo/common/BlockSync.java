@@ -37,7 +37,7 @@ public class BlockSync implements SyncListener {
     private final Logger logger = LoggerFactory.getLogger(BlockSync.class);
 
     final RepchainConfig repchainConfig;
-    @Autowired
+//    @Autowired
     public Dict d; // 此处d仅为演示用，生产环境中应写入数据库
 //    @Autowired
 //    @Profile("test")
@@ -54,8 +54,8 @@ public class BlockSync implements SyncListener {
         //说明文档可直接参考https://gitee.com/BTAJL/RCJava-core#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E
         //我理解需要改得地方就是用到host的地方
         SSLContext sslContext = SSLContexts.custom()
-                .loadTrustMaterial(new File("D:\\deviceworkspace\\sensors-java\\src\\main\\resources\\jks\\121000005l35120456.node1.jks"), "123".toCharArray(), new TrustSelfSignedStrategy())
-                .loadKeyMaterial(new File("D:\\deviceworkspace\\sensors-java\\src\\main\\resources\\jks\\121000005l35120456.node1.jks"), "123".toCharArray(), "123".toCharArray())
+                .loadTrustMaterial(new File(repchainConfig.getServerCertJksPath()), repchainConfig.getServerJksPassword().toCharArray(), new TrustSelfSignedStrategy())
+                .loadKeyMaterial(new File(repchainConfig.getJksPath()), repchainConfig.getStorePassword().toCharArray(), repchainConfig.getKeyPassword().toCharArray())
                 .build();
         String host = repchainConfig.getHost();
         long locHeight = repchainConfig.getBlockHeight();
@@ -141,7 +141,7 @@ public class BlockSync implements SyncListener {
                         // 利用ptx这一对象，可在用原业务数据库中将已经上链出块的数据打上标记，也可以写入到一个专门维护的表，包括原业务id、inBlockHeight、idxInBlock、txid、状态等字段
                         // 在区块链定位数据所需要的参数：inBlockHeight、txid，上链的数据通过这两个参数可以查到，idxInBlock不是必须的
                         // 如有需要展示的属性，可自行从ptx获取
-                        d.set(tx.getId(), ptx);
+//                        d.set(tx.getId(), ptx);
                     }
 
                 } catch (Exception e) {

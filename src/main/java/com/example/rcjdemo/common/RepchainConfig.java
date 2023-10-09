@@ -17,5 +17,10 @@ import org.springframework.stereotype.Component;
 public class RepchainConfig {
     private String host;
     private Long blockHeight;
-
+    private Boolean enableSSL;
+    private String serverCertJksPath;
+    private String serverJksPassword;
+    private String jksPath;
+    private String storePassword;
+    private String keyPassword;
 }

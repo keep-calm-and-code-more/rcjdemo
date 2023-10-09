@@ -28,3 +28,39 @@
 
 
 使用时请注意分支需与RepChain配套。
+
+## 开启SSL认证
+
+1. 注册用户并授权接口访问权限，参考代码 `RcjdemoApplicationTests.addSubmitterToRepchain`
+
+2. 将授权用户的jks放入Repchain `mytrustkeystore.jks` 中，或者 [SDK提交](https://gitee.com/BTAJL/RCJava-core/blob/master/src/test/java/com/rcjava/multi_chain/ManageNodeCertTest.java#L183),
+3. 修改 `application.yml` 中的配置,
+```yaml
+repchain:
+  # 区块链地址
+  host: 192.168.199.10:9081
+  # 需要同步的区块初始高度
+  blockHeight: 0
+  # 开启ssl双向认证，此项一定要开启
+  enableSSL: true
+  # 服务端的证书的jks
+  serverCertJksPath: D:\ideaProject\RCJava-core\jks\jdk13\node.jks
+  # 服务端证书的jks密码
+  serverJksPassword: 123
+  # 用户自己持有的jks
+#  jksPath: D:\ideaProject\RCJava-core\jks\jdk13\121000005l35120456.node1.jks
+  jksPath: D:\ideaProject\rcjdemo\src\main\resources\jindian.jks
+  # 用户的jks的password
+  storePassword: 123
+  # 用户的私钥的password
+  keyPassword: 123
+```
+4. 修改同步程序，示例位于 `com.example.rcjdemo.common.BlockSync`
+
+5. 提交时请使用Spring托管的客户端。
+```java
+    @Autowired
+    private TranPostClient tranPostClient;
+```
+
+6. 自定义客户端请参考 `com.example.rcjdemo.common.RepchainConfiguration`

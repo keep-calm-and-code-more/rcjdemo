@@ -57,6 +57,20 @@ mybatis:
 # 区块链配置
 repchain:
   # 区块链地址
-  host: 127.0.0.1:9081
+  host: 192.168.199.10:9081
   # 需要同步的区块初始高度
   blockHeight: 0
+  # 开启ssl双向认证
+  enableSSL: true
+  # 服务端的证书的jks
+  serverCertJksPath: D:\ideaProject\RCJava-core\jks\jdk13\node.jks
+  # 服务端证书的jks密码
+  serverJksPassword: 123
+  # 用户自己持有的jks
+#  jksPath: D:\ideaProject\RCJava-core\jks\jdk13\121000005l35120456.node1.jks
+  jksPath: D:\ideaProject\rcjdemo\src\main\resources\jindian.jks
+  # 用户的jks的password
+  storePassword: 123
+  # 用户的私钥的password
+  keyPassword: 123
+
