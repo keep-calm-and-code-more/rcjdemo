@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @SpringBootApplication
-//@EnableBlockSyncTask
+@EnableBlockSyncTask
 @tk.mybatis.spring.annotation.MapperScan(basePackages = "com.example.rcjdemo.dao")
 public class RcjdemoApplication {
 

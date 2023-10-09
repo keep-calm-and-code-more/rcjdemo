@@ -57,7 +57,7 @@ mybatis:
 # 区块链配置
 repchain:
   # 区块链地址
-  host: 192.168.199.10:9081
+  host: 192.168.199.10:9086
   networkId: identity-net
   # 需要同步的区块初始高度
   blockHeight: 0
@@ -68,7 +68,7 @@ repchain:
   # 需要被授权的账户
   grantedCreditCode: identity-net:test
   # 开启ssl双向认证
-  enableSSL: true
+  enableSSL: false
   # 服务端的证书的jks
   serverCertJksPath: D:\ideaProject\RCJava-core\jks\jdk13\node.jks
   # 服务端证书的jks密码

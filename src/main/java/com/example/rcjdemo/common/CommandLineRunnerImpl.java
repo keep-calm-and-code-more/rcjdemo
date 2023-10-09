@@ -48,19 +48,19 @@ public class CommandLineRunnerImpl implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        String pemString = FileUtil.readString(new File(repchainConfig.getPemPath()), StandardCharsets.UTF_8);
-        PEMParser stringParser = new PEMParser(new StringReader(pemString));
-        PrivateKey privateKey = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider()).getPrivateKey((PrivateKeyInfo) stringParser.readObject());
-        SysCert sysCert = SysCert.builder()
-                .creditCode(repchainConfig.getCreditCode())
-                .certName(repchainConfig.getCertName())
-                .privateKey(PemUtil.toPemString(privateKey,false))
-                .build();
-        byte[] bytes = build(JSONObject.toJSONString(buildAuthList(repchainConfig.getGrantedCreditCode())), "RdidOperateAuthorizeTPL", "grantOperate",sysCert).toByteArray();
-        String tran = HexUtil.bytesToHex(bytes);
-        JSONObject res = tranPostClient.postSignedTran(tran);
-        logger.info(res.toString());
-        logger.info("start success");
+//        String pemString = FileUtil.readString(new File(repchainConfig.getPemPath()), StandardCharsets.UTF_8);
+//        PEMParser stringParser = new PEMParser(new StringReader(pemString));
+//        PrivateKey privateKey = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider()).getPrivateKey((PrivateKeyInfo) stringParser.readObject());
+//        SysCert sysCert = SysCert.builder()
+//                .creditCode(repchainConfig.getCreditCode())
+//                .certName(repchainConfig.getCertName())
+//                .privateKey(PemUtil.toPemString(privateKey,false))
+//                .build();
+//        byte[] bytes = build(JSONObject.toJSONString(buildAuthList(repchainConfig.getGrantedCreditCode())), "RdidOperateAuthorizeTPL", "grantOperate",sysCert).toByteArray();
+//        String tran = HexUtil.bytesToHex(bytes);
+//        JSONObject res = tranPostClient.postSignedTran(tran);
+//        logger.info(res.toString());
+//        logger.info("start success");
     }
     private String[] buildAuthList(String creditCode){
         List<String> list = new ArrayList<>();

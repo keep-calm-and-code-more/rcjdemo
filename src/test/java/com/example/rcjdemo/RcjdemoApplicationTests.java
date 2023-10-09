@@ -14,6 +14,8 @@ import com.example.rcjdemo.common.RepchainConfig;
 import com.example.rcjdemo.common.SysCert;
 import com.example.rcjdemo.util.HexUtil;
 import com.example.rcjdemo.util.TxHelper;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.JsonFormat;
 import com.rcjava.client.TranPostClient;
 import com.rcjava.protos.Peer;
@@ -382,6 +384,39 @@ class RcjdemoApplicationTests {
 
     }
 
+    @Test
+    void addAuth() throws InvalidProtocolBufferException, InterruptedException {
+        for (String auth : apiAuthList) {
+            addAuthOp(auth);
+        }
+    }
+
+    void addAuthOp(String functionName) throws InvalidProtocolBufferException, InterruptedException {
+        long millis = System.currentTimeMillis();
+        Peer.Operate operate = Peer.Operate.newBuilder()
+                // 合约的某个方法
+                .setOpId(DigestUtils.sha256Hex("credence-net:"+functionName))
+                // 描述随意
+                .setDescription("")
+                .setRegister("identity-net:951002007l78123233")
+                // 比如新注册了一个用户usr-1，如果是false的话，usr-1需要被授权才能调用creProof3，
+                // 如果设置true，新注册的任何用户，都可以调用这个方法
+                // TODO 是否是公开的，如果为false，则别的用户需要得到授权才可以调用，如果为true，则表示公开，任何人(注册用户)都可以调用
+                .setIsPublish(true)
+                .setOperateType(Peer.Operate.OperateType.OPERATE_SERVICE)
+                .setAuthFullName("credence-net:"+functionName) // 假设CredenceTPL 有多个版本
+                .setCreateTime(Timestamp.newBuilder().setSeconds(millis / 1000).setNanos((int) ((millis % 1000) * 1000000)).build())
+                .setOpValid(true)
+                .setVersion("1.0")
+                .build();
+        String tranId = UUID.randomUUID().toString();
+        byte[] bytes = build(JsonFormat.printer().print(operate), "RdidOperateAuthorizeTPL", "signUpOperate").toByteArray();
+        String tran = HexUtil.bytesToHex(bytes);
+        JSONObject res = tranPostClient.postSignedTran(tran);
+        System.out.println(JSONUtil.toJsonPrettyStr(res));
+        Thread.sleep(1000);
+    }
+
     /**
      * 注册用户并授权
      * @throws Exception
@@ -392,62 +427,70 @@ class RcjdemoApplicationTests {
     }
 
     void addPersionalService(String creditCode) throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC", "BC");
-        keyPairGenerator.initialize(new ECGenParameterSpec("P-256"));
-        // 生成keypair
-        KeyPair keyPair = keyPairGenerator.genKeyPair();
-        // 初始化Jks
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(null, null);
-        // 生成证书
-        X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
-        X500Name x500Name = x500NameBuilder.addRDN(BCStyle.CN, "cert_"+creditCode).build();
-        X509Certificate x509Certificate = createX509Certificate(x500Name, keyPair, "SHA256withECDSA", 24 * 365 * 5);
-        PrivateKey privateKey = keyPair.getPrivate();
-        String cert = PemUtil.toPemString("CERTIFICATE", x509Certificate.getEncoded());
-        System.out.println(creditCode);
-        System.out.println("cert_"+creditCode);
-        System.out.println(PemUtil.toPemString(privateKey, false));
-        System.out.println(cert);
-
-        // 注册用户
-        // 注册用户参数
-        Map<String, Object> tranMap = new HashMap<>(7);
-        tranMap.put("creditCode",creditCode);
-        tranMap.put("name", creditCode);
-        tranMap.put("signerInfo", JSONUtil.toJsonStr(MapUtil.of(new String[][]{
-                {"userType", "submitter"},
-        })));
-        tranMap.put("signerValid", true);
-        tranMap.put("createTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
-        tranMap.put("version", "1.0");
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(MapUtil.builder(new HashMap<String, Object>(7))
-                .put("certificate", cert)
-                .put("algType", "SHA256withECDSA")
-                .put("certValid", true)
-                .put("regTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-                .put("certType", "CERT_AUTHENTICATION")
-                .put("certHash", DigestUtil.sha256Hex(cert.replaceAll("\r\n|\r|\n|\\s", "")))
-                .put("id", MapUtil.builder(new HashMap<String, Object>(3))
-                        .put("creditCode", creditCode)
-                        .put("certName", "cert_" + creditCode)
-                        .put("version", "1.0").build())
-                .build());
-        tranMap.put("authenticationCerts", list);
-        byte[] bytes = build(JSONObject.toJSONString(tranMap), "RdidOperateAuthorizeTPL","signUpSigner").toByteArray();
+//        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC", "BC");
+//        keyPairGenerator.initialize(new ECGenParameterSpec("P-256"));
+//        // 生成keypair
+//        KeyPair keyPair = keyPairGenerator.genKeyPair();
+//        // 初始化Jks
+//        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+//        keyStore.load(null, null);
+//        // 生成证书
+//        X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
+//        X500Name x500Name = x500NameBuilder.addRDN(BCStyle.CN, "cert_"+creditCode).build();
+//        X509Certificate x509Certificate = createX509Certificate(x500Name, keyPair, "SHA256withECDSA", 24 * 365 * 5);
+//        PrivateKey privateKey = keyPair.getPrivate();
+//        String cert = PemUtil.toPemString("CERTIFICATE", x509Certificate.getEncoded());
+//        System.out.println(creditCode);
+//        System.out.println("cert_"+creditCode);
+//        System.out.println(PemUtil.toPemString(privateKey, false));
+//        System.out.println(cert);
+//        String cert = "-----BEGIN CERTIFICATE-----\n" +
+//                "MIIBOTCB4KADAgECAgYBixJxHyUwCgYIKoZIzj0EAwIwJDEiMCAGA1UEAwwZY2Vy\n" +
+//                "dF9pZGVudGl0eS1uZXQ6amluZGlhbjAeFw0yMzEwMDkwMzE4MDVaFw0yODEwMDcw\n" +
+//                "MzE4MDVaMCQxIjAgBgNVBAMMGWNlcnRfaWRlbnRpdHktbmV0OmppbmRpYW4wWTAT\n" +
+//                "BgcqhkjOPQIBBggqhkjOPQMBBwNCAATorFpfqtCzLIZAbuoPZB4nIXZAVSJHNGG/\n" +
+//                "RIx92hrI7YTsuNvzOvWJzDACpkV7AbIMWxIpWzBxLwL/3KM8tCatMAoGCCqGSM49\n" +
+//                "BAMCA0gAMEUCIBt2+DPF7FWtone6UwwUtWoXPpz+KMxVHMIY32ZZrV/CAiEAoAyM\n" +
+//                "ByZa1FrzKoHiCFNGpomiAiR+dDZ/dzm4xlLZdr0=\n" +
+//                "-----END CERTIFICATE-----";
+//        // 注册用户
+//        // 注册用户参数
+//        Map<String, Object> tranMap = new HashMap<>(7);
+//        tranMap.put("creditCode",creditCode);
+//        tranMap.put("name", creditCode);
+//        tranMap.put("signerInfo", JSONUtil.toJsonStr(MapUtil.of(new String[][]{
+//                {"userType", "submitter"},
+//        })));
+//        tranMap.put("signerValid", true);
+//        tranMap.put("createTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+//        tranMap.put("version", "1.0");
+//        List<Map<String, Object>> list = new ArrayList<>();
+//        list.add(MapUtil.builder(new HashMap<String, Object>(7))
+//                .put("certificate", cert)
+//                .put("algType", "SHA256withECDSA")
+//                .put("certValid", true)
+//                .put("regTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+//                .put("certType", "CERT_AUTHENTICATION")
+//                .put("certHash", DigestUtil.sha256Hex(cert.replaceAll("\r\n|\r|\n|\\s", "")))
+//                .put("id", MapUtil.builder(new HashMap<String, Object>(3))
+//                        .put("creditCode", creditCode)
+//                        .put("certName", "cert_" + creditCode)
+//                        .put("version", "1.0").build())
+//                .build());
+//        tranMap.put("authenticationCerts", list);
+//        byte[] bytes = build(JSONObject.toJSONString(tranMap), "RdidOperateAuthorizeTPL","signUpSigner").toByteArray();
+//        String tran = HexUtil.bytesToHex(bytes);
+//        JSONObject res = tranPostClient.postSignedTran(tran);
+//        System.out.println(JSONUtil.toJsonPrettyStr(res));
+//        try {
+//            Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+//        // 用户授权
+        byte[] bytes = build(JSONObject.toJSONString(buildAuthList(creditCode)).toString(), "RdidOperateAuthorizeTPL", "grantOperate").toByteArray();
         String tran = HexUtil.bytesToHex(bytes);
         JSONObject res = tranPostClient.postSignedTran(tran);
-        System.out.println(JSONUtil.toJsonPrettyStr(res));
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-//        // 用户授权
-        bytes = build(JSONObject.toJSONString(buildAuthList(creditCode)).toString(), "RdidOperateAuthorizeTPL", "grantOperate").toByteArray();
-        tran = HexUtil.bytesToHex(bytes);
-        res = tranPostClient.postSignedTran(tran);
         System.out.println(JSONUtil.toJsonPrettyStr(res));
     }
 
@@ -457,7 +500,7 @@ class RcjdemoApplicationTests {
             Map<String, Object> grantedMap = MapUtil.builder(new HashMap<String, Object>(8))
                     .put("id", UUID.randomUUID().toString())
                     .put("grant", sysCert.getCreditCode())
-                    .put("opId", new String[]{DigestUtil.sha256Hex("identity-net:"+auth)})
+                    .put("opId", new String[]{DigestUtil.sha256Hex("credence-net:"+auth)})
                     .put("isTransfer", 0)
                     .put("authorizeValid", true)
                     .put("createTime", DateUtil.format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
