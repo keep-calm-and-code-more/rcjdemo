@@ -398,6 +398,11 @@ class RcjdemoApplicationTests {
                 .setOpId(DigestUtils.sha256Hex("credence-net:"+functionName))
                 // 描述随意
                 .setDescription("")
+                // 不知道为啥，必须得有，尤其注册SSL接口调用操作的时候
+                .setOperateServiceName(0,"transaction.stream")
+                .setOperateServiceName(1,"transaction.postTranByString")
+                .setOperateServiceName(2,"transaction.postTranStream")
+                .setOperateServiceName(3,"transaction.postTran")
                 .setRegister("identity-net:951002007l78123233")
                 // 比如新注册了一个用户usr-1，如果是false的话，usr-1需要被授权才能调用creProof3，
                 // 如果设置true，新注册的任何用户，都可以调用这个方法
