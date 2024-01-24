@@ -18,9 +18,11 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCSException;
+import org.springframework.transaction.config.TxNamespaceHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +33,9 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+/**
+ *
+ */
 @Getter
 public class TxHelper {
 
@@ -53,6 +58,23 @@ public class TxHelper {
                 .build(); // 管理员签名ID
     }
 
+    /**
+     *
+     * @param creditCode
+     * @param certName
+     * @param privateKey
+     * @throws IOException
+     * @throws OperatorCreationException
+     * @throws PKCSException
+     */
+    public TxHelper(String creditCode, String certName, PrivateKey privateKey) throws IOException, OperatorCreationException, PKCSException {
+        this();
+        this.privateKey = privateKey;
+        this.certId = Peer.CertId.newBuilder()
+                .setCreditCode(creditCode)
+                .setCertName(certName)
+                .build(); // 签名ID
+    }
     /**
      * @param creditCode
      * @param certName
@@ -98,7 +120,7 @@ public class TxHelper {
      * @param scVer    智能合约版本
      * @param funcName 智能合约方法
      * @param argDict  参数
-     * @return
+     * @return Peer.Transaction
      */
     public Peer.Transaction callArgTx(String scName, Integer scVer, String funcName, Dict argDict) {
         Peer.ChaincodeId chaincodeId = Peer.ChaincodeId.newBuilder()

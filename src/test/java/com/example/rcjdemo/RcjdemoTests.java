@@ -125,7 +125,7 @@ class RcjdemoTests {
         System.out.println(resp);
         cn.hutool.json.JSONObject respObj = JSONUtil.parseObj(resp);
         Object result = respObj.get("result");
-        if (result.equals(null)) {
+        if (result == null) {
             throw new DataRetrievalFailureException("查询不到该状态！");
         }
         return JSONUtil.parseObj(result.toString());
