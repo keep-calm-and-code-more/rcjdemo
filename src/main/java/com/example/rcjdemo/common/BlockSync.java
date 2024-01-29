@@ -7,6 +7,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.rcjdemo.entity.ParsedTx;
+import com.example.rcjdemo.util.OperLogUtil;
+import com.google.protobuf.ByteString;
 import com.rcjava.client.ChainInfoClient;
 import com.rcjava.exception.SyncBlockException;
 import com.rcjava.protos.Peer;
@@ -77,7 +79,16 @@ public class BlockSync implements SyncListener {
         Thread thread = new Thread(syncService::start, "SyncServiceThread");
         thread.start();
     }
-
+    public static Map.Entry<String, ByteString> getValueByKeyContains(Map<String, ByteString> map, String targetKey) {
+        for (Map.Entry<String, ByteString> entry : map.entrySet()) {
+            String key = entry.getKey();
+            if (key.contains(targetKey)) {
+                return entry;
+            }
+        }
+        return null; // 如果没有找到匹配的值，则返回null或适合的默认值
+    }
+}
     /**
      * 用于解析获取到的区块数据，对应RepChain上的接口/block/$idx返回的数据
      * 如需要得到链上数据，请修改此方法内部逻辑来进行解析、持久化到业务数据库
@@ -99,36 +110,63 @@ public class BlockSync implements SyncListener {
             );
             List<Peer.TransactionResult> txResultList = block.getTransactionResultsList();
 
+
             for (int i = 0; i < txList.size(); i++) {
                 Peer.Transaction tx = txList.get(i);
                 Peer.TransactionResult txResult = (Peer.TransactionResult) txResultDict.get(tx.getId());
-                if (!(tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE && StrUtil.equals(tx.getCid().getChaincodeName(), scOfInterest))) {
-//                    System.out.println(tx.getCid().getChaincodeName());
-                    continue;
+                // 在同步tx的时候，如果tx调用了用户管理合约的用户注册合约方法，则取得这一tx的执行结果中的公钥
+                if (tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE
+                        && StrUtil.equals(tx.getCid().getChaincodeName(), "RdidOperateAuthorizeTPL")
+                        && StrUtil.equals(tx.getIpt().getFunction(), "signUpSigner")) {
+
+//                    String signerID = signerKey.replaceAll(repchainConfig.getChainNetworkId() + BlockKeyConstant.UNDER_LINE + ChainCodeName.AUTHORITY + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.SIGNER + BlockKeyConstant.LINE, "");
+                    Map<String, ByteString> txResultMap = txResult.getStatesSetMap();
+                    Map.Entry<String, ByteString> certEntry = getValueByKeyContains(txResultMap, "identity-net_RdidOperateAuthorizeTPL___cert-");
+                    assert certEntry != null;
+                    String[] parts = certEntry.getKey().replace("identity-net_RdidOperateAuthorizeTPL___cert-","").split("\\.");
+                    String creditCode = parts[0];
+                    String certName = parts[1];
+                    ByteString certByte = certEntry.getValue();
+                    // 反序列化得到的是一个对象，公钥证书的字符串被包含其中，具体数据结构可参考src/main/protobuf/rc2.proto
+                    Peer.Certificate peerCert = (Peer.Certificate) OperLogUtil.toInstance(certByte.toByteArray());    Map.Entry<String, ByteString> signerEntry = getValueByKeyContains(txResultMap, "identity-net_RdidOperateAuthorizeTPL___signer-");
+                    assert signerEntry !=null;
+                    ByteString signerByte  = signerEntry.getValue();
+                    // 反序列化得到的是一个对象，具体数据结构可参考src/main/protobuf/rc2.proto
+                    //signer中可嵌入一些用户属性信息，例如昵称、性别、头像地址等等
+                    Peer.Signer peerSigner = (Peer.Signer) OperLogUtil.toInstance(signerByte.toByteArray());
+
+                    //后续根据creditCode、certName、peerCert、peerSigner对本地数据库进行新增和修改等操作，
+                    // 目的是让业务系统知道该用户已经注册到链上，并且业务系统可取得链上公钥证书，用于验证
                 }
-                try {
-                    JSONObject argobj = tx.getIpt().getArgsCount() > 0 ? JSONUtil.parseObj(tx.getIpt().getArgsList().get(0)) : null;
-                    ParsedTx ptx = ParsedTx.builder()
-                            .inBlockHeight(block.getHeader().getHeight())
-                            .idxInBlock(i + 1)
-                            .txid(tx.getId())
-                            .tx(tx)
-                            .contractName(tx.getCid().getChaincodeName())
-                            .contractVer(tx.getCid().getVersion())
-                            .funcName(tx.getIpt().getFunction())
-                            .argJSONObject(argobj)
-                            .txResult(txResult)
-                            .txSubmitter(tx.getSignature().getCertId().getCreditCode() + "|" + tx.getSignature().getCertId().getCertName())
-                            .successFlag(txResult.getErr().getCode()==0)
-                            .build();
-                    if (ptx.getSuccessFlag()) { // 可忽略未成功执行的tx
-                        // 利用ptx这一对象，可在用原业务数据库中将已经上链出块的数据打上标记，也可以写入到一个专门维护的表，包括原业务id、inBlockHeight、idxInBlock、txid、状态等字段
-                        // 在区块链定位数据所需要的参数：inBlockHeight、txid，上链的数据通过这两个参数可以查到，idxInBlock不是必须的
-                        // 如有需要展示的属性，可自行从ptx获取
-                        d.set(tx.getId(), ptx);
+
+                if (tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE && StrUtil.equals(tx.getCid().getChaincodeName(), scOfInterest)) {
+//                    System.out.println(tx.getCid().getChaincodeName());
+                    try {
+                        JSONObject argobj = tx.getIpt().getArgsCount() > 0 ? JSONUtil.parseObj(tx.getIpt().getArgsList().get(0)) : null;
+                        ParsedTx ptx = ParsedTx.builder()
+                                .inBlockHeight(block.getHeader().getHeight())
+                                .idxInBlock(i + 1)
+                                .txid(tx.getId())
+                                .tx(tx)
+                                .contractName(tx.getCid().getChaincodeName())
+                                .contractVer(tx.getCid().getVersion())
+                                .funcName(tx.getIpt().getFunction())
+                                .argJSONObject(argobj)
+                                .txResult(txResult)
+                                .txSubmitter(tx.getSignature().getCertId().getCreditCode() + "|" + tx.getSignature().getCertId().getCertName())
+                                .successFlag(txResult.getErr().getCode() == 0)
+                                .build();
+                        if (ptx.getSuccessFlag()) { // 可忽略未成功执行的tx
+                            // 利用ptx这一对象，可在用原业务数据库中将已经上链出块的数据打上标记，也可以写入到一个专门维护的表，包括原业务id、inBlockHeight、idxInBlock、txid、状态等字段
+                            // 在区块链定位数据所需要的参数：inBlockHeight、txid，上链的数据通过这两个参数可以查到，idxInBlock不是必须的
+                            // 如有需要展示的属性，可自行从ptx获取
+                            d.set(tx.getId(), ptx);
+
+
+                        }
+                    } catch (Exception e) {
+                        throw new SyncBlockException(e);
                     }
-                } catch (Exception e) {
-                    throw new SyncBlockException(e);
                 }
             }
 
