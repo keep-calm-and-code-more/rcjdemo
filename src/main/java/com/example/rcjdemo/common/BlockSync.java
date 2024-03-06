@@ -137,7 +137,8 @@ public class BlockSync implements SyncListener {
 
                     //后续根据creditCode、certName、peerCert、peerSigner对本地数据库进行新增和修改等操作，
                     // 目的是让业务系统知道该用户已经注册到链上，并且业务系统可取得链上公钥证书，用于验证
-                    // 通过peerSigner.getSignerValid(); 可获取用户是否被禁用
+                    // 通过tx.getIpt().getFunction()可查看当前tx调用的合约方法，如果调用的合约方法是updateSignerStatus，则tx可改变用户是否被禁用的状态，
+                    // 此时通过peerSigner.getSignerValid(); 可获取用户是否被禁用
                 }
 
                 if (tx.getType() == Peer.Transaction.Type.CHAINCODE_INVOKE && StrUtil.equals(tx.getCid().getChaincodeName(), scOfInterest)) {
