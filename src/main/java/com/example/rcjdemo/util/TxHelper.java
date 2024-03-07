@@ -59,7 +59,6 @@ public class TxHelper {
     }
 
     /**
-     *
      * @param creditCode
      * @param certName
      * @param privateKey
@@ -75,6 +74,7 @@ public class TxHelper {
                 .setCertName(certName)
                 .build(); // 签名ID
     }
+
     /**
      * @param creditCode
      * @param certName
@@ -123,13 +123,18 @@ public class TxHelper {
      * @return Peer.Transaction
      */
     public Peer.Transaction callArgTx(String scName, Integer scVer, String funcName, Dict argDict) {
+        return callArgTx(scName, scVer, funcName, JSONUtil.toJsonStr(argDict));
+    }
+
+    public Peer.Transaction callArgTx(String scName, Integer scVer, String funcName, String argJSONstr) {
+
         Peer.ChaincodeId chaincodeId = Peer.ChaincodeId.newBuilder()
                 .setChaincodeName(scName)
                 .setVersion(scVer)
                 .build();
         Peer.ChaincodeInput chaincodeInput = Peer.ChaincodeInput.newBuilder()
                 .setFunction(funcName)
-                .addArgs(JSONUtil.toJsonStr(argDict))
+                .addArgs(argJSONstr)
                 .build();
 
         InvokeTran invokeTran = InvokeTran.newBuilder()

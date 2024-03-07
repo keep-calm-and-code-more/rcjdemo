@@ -4,8 +4,11 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.file.FileReader;
 import cn.hutool.core.io.file.FileWriter;
+import cn.hutool.core.io.resource.ClassPathResource;
+import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -17,11 +20,16 @@ import com.alibaba.fastjson2.JSONObject;
 import com.example.rcjdemo.common.RepchainConfig;
 import com.example.rcjdemo.util.HexUtil;
 import com.example.rcjdemo.util.TxHelper;
+import com.google.protobuf.Timestamp;
+import com.google.protobuf.util.JsonFormat;
 import com.rcjava.client.TranPostClient;
 import com.rcjava.protos.Peer;
+import com.rcjava.tran.TranCreator;
+import com.rcjava.tran.impl.DeployTran;
 import com.rcjava.util.CertUtil;
 import com.rcjava.util.KeyUtil;
 import com.rcjava.util.PemUtil;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -49,6 +57,7 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.util.Arrays;
 import java.util.Date;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -351,6 +360,97 @@ class RcjdemoApplicationTests {
         assertTrue(verify(HexUtil.hexToByteArray(hex), "asd".getBytes(StandardCharsets.UTF_8), x509Certificate.getPublicKey(), "SHA256withECDSA"));
 
     }
+    @Test
+    @Order(5)
+    void deploySmartContract()throws Exception {
+        Peer.ChaincodeId customTplId = Peer.ChaincodeId.newBuilder().setChaincodeName("CustomProofTPL").setVersion(1).build();
+        String tplString = ResourceUtil.readUtf8Str("CustomProofTPL.scala");
+
+        //不一定非得超级管理员，可以是node1-node5
+        ClassPathResource resource = new ClassPathResource("951002007l78123233.super_admin2.0.pem");
+        PrivateKey super_pri = KeyUtil.generatePrivateKey(new PEMParser(resource.getReader(Charset.defaultCharset())), "");
+        TranCreator superTranCreator = TranCreator.newBuilder().setPrivateKey(super_pri).setSignAlgorithm("SHA256withECDSA").build();
+        Peer.CertId  superCertId = Peer.CertId.newBuilder()
+                .setCreditCode("identity-net:951002007l78123233")
+                .setCertName("super_admin")
+                .build(); // 管理员签名ID
+
+        Peer.ChaincodeDeploy chaincodeDeploy = Peer.ChaincodeDeploy.newBuilder()
+                .setTimeout(5000)
+                .setCodePackage(tplString)
+                .setLegalProse("")
+                .setCType(Peer.ChaincodeDeploy.CodeType.CODE_SCALA)
+                .setRType(Peer.ChaincodeDeploy.RunType.RUN_SERIAL)
+                .setSType(Peer.ChaincodeDeploy.StateType.STATE_BLOCK)
+                .setInitParameter("")
+                .setCclassification(Peer.ChaincodeDeploy.ContractClassification.CONTRACT_CUSTOM)
+                .build();
+        DeployTran deployTran = DeployTran.newBuilder()
+                .setTxid(IdUtil.simpleUUID())
+                .setCertId(superCertId)
+                .setChaincodeId(customTplId)
+                .setChaincodeDeploy(chaincodeDeploy)
+                .build();
+
+        Peer.Transaction signedDeployTran = superTranCreator.createDeployTran(deployTran);
+        JSONObject r = tranPostClient.postSignedTran(signedDeployTran);
+        System.out.println(JSONUtil.toJsonStr(r));
+        Thread.sleep(30000); // 此处仅为了本单元测试等待BlockSync同步，上限为30s所以这里设为30s，一般不会等那么久。
+    }
+
+    /**
+     * 注册合约方法
+     * @throws Exception
+     */
+    @Test
+    @Order(6)
+    void signUpOperofSmartContract()throws Exception {
+        long millis = System.currentTimeMillis();
+        Peer.Operate operate = Peer.Operate.newBuilder()
+                .setOpId(DigestUtils.sha256Hex("identity-net:CustomProofTPL.putProof"))
+                .setDescription("发布合约操作")
+                .setRegister("identity-net:951002007l78123233")
+                .setIsPublish(true)  //公开方法，用户均可调用，否则需要对用户授权才能调用该方法
+                .setOperateType(Peer.Operate.OperateType.OPERATE_CONTRACT)
+                // 固定值
+                .addAllOperateServiceName(Arrays.asList("transaction.stream", "transaction.postTranByString", "transaction.postTranStream", "transaction.postTran"))
+                .setAuthFullName("identity-net:CustomProofTPL.putProof")
+                .setCreateTime(Timestamp.newBuilder().setSeconds(millis / 1000).setNanos((int) ((millis % 1000) * 1000000)).build())
+                .setOpValid(true)
+                .setVersion("1.0")
+                .build();
+        TxHelper txh = new TxHelper("identity-net:951002007l78123233", "super_admin", "951002007l78123233.super_admin2.0.pem");
+        Peer.Transaction tran  = txh.callArgTx("RdidOperateAuthorizeTPL",1, "signUpOperate",JsonFormat.printer().print(operate));
+        String txid = tran.getId();
+        JSONObject r = tranPostClient.postSignedTran(tran);
+        System.out.println(JSONUtil.toJsonStr(r));
+        Thread.sleep(30000); // 此处仅为了本单元测试等待BlockSync同步，上限为30s所以这里设为30s，一般不会等那么久。
+    }
+    /**
+     * 测试新合约存证功能
+     *
+     * @throws IOException
+     * @throws OperatorCreationException
+     * @throws PKCSException
+     * @throws InterruptedException
+     */
+    @Test
+    @Order(7)
+    void testDeployedSC() throws IOException, OperatorCreationException, PKCSException, InterruptedException {
+        TxHelper txh = new TxHelper("identity-net:951002007l78123233", "super_admin", "951002007l78123233.super_admin2.0.pem");
+        String randomkey = RandomUtil.randomString(10);
+        Dict argDict = Dict.create()
+                .set(randomkey, "value");
+        Peer.Transaction tx = txh.callArgTx("CustomProofTPL", 1, "putProof", argDict);
+        String txid = tx.getId();
+        cn.hutool.json.JSONObject r = JSONUtil.parseObj(tranPostClient.postSignedTran(tx));
+        System.out.println(r.toStringPretty());
+        Thread.sleep(30000); // 此处仅为了本单元测试等待BlockSync同步，上限为30s所以这里设为30s，一般不会等那么久。
+        String result = (String) queryState(randomkey, "CustomProofTPL");
+        System.out.println(result);
+        assertEquals(result, "value");
+    }
+
 
 }
 

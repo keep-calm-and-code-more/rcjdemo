@@ -18,6 +18,8 @@ import com.rcjava.sync.SyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import rep.proto.rc2.Signer;
+import rep.proto.rc2.Certificate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +90,6 @@ public class BlockSync implements SyncListener {
         }
         return null; // 如果没有找到匹配的值，则返回null或适合的默认值
     }
-}
     /**
      * 用于解析获取到的区块数据，对应RepChain上的接口/block/$idx返回的数据
      * 如需要得到链上数据，请修改此方法内部逻辑来进行解析、持久化到业务数据库
@@ -120,20 +121,26 @@ public class BlockSync implements SyncListener {
                         && StrUtil.equals(tx.getIpt().getFunction(), "signUpSigner")) {
 
 //                    String signerID = signerKey.replaceAll(repchainConfig.getChainNetworkId() + BlockKeyConstant.UNDER_LINE + ChainCodeName.AUTHORITY + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.UNDER_LINE + BlockKeyConstant.SIGNER + BlockKeyConstant.LINE, "");
-                    Map<String, ByteString> txResultMap = txResult.getStatesSetMap();
-                    Map.Entry<String, ByteString> certEntry = getValueByKeyContains(txResultMap, "identity-net_RdidOperateAuthorizeTPL___cert-");
+                    Map<String, ByteString> txResultStateMap = txResult.getStatesSetMap();
+                    Map.Entry<String, ByteString> certEntry = getValueByKeyContains(txResultStateMap, "identity-net_RdidOperateAuthorizeTPL___cert-");
                     assert certEntry != null;
                     String[] parts = certEntry.getKey().replace("identity-net_RdidOperateAuthorizeTPL___cert-","").split("\\.");
                     String creditCode = parts[0];
                     String certName = parts[1];
                     ByteString certByte = certEntry.getValue();
-                    // 反序列化得到的是一个对象，公钥证书的字符串被包含其中，具体数据结构可参考src/main/protobuf/rc2.proto
-                    Peer.Certificate peerCert = (Peer.Certificate) OperLogUtil.toInstance(certByte.toByteArray());    Map.Entry<String, ByteString> signerEntry = getValueByKeyContains(txResultMap, "identity-net_RdidOperateAuthorizeTPL___signer-");
+                    // 反序列化从链上取到的用户（类型为Signer）
+                    // !!!特别注意 反序列化用的类来自rep.proto.rc2，这与本地构建交易时使用的类不一样
+                    // 原因是链上的内置对象的类型为Scala的类
+                    // 开发业务智能合约的时候建议尽量JSON序列化后存储在链上，之后取下来直接反序列化字符串得到JSON字符串再反序列化即可，避免这种麻烦
+
+                    // 反序列化得到的是一个Certificate类型的对象，公钥证书的字符串被包含其中，具体数据结构可参考src/main/protobuf/rc2.proto
+                    Certificate peerCert = (Certificate) OperLogUtil.toInstance(certByte.toByteArray());
+                    Map.Entry<String, ByteString> signerEntry = getValueByKeyContains(txResultStateMap, "identity-net_RdidOperateAuthorizeTPL___signer-");
                     assert signerEntry !=null;
                     ByteString signerByte  = signerEntry.getValue();
                     // 反序列化得到的是一个对象，具体数据结构可参考src/main/protobuf/rc2.proto
                     //signer中可嵌入一些用户属性信息，例如昵称、性别、头像地址等等
-                    Peer.Signer peerSigner = (Peer.Signer) OperLogUtil.toInstance(signerByte.toByteArray());
+                    Signer peerSigner = (Signer) OperLogUtil.toInstance(signerByte.toByteArray());
 
                     //后续根据creditCode、certName、peerCert、peerSigner对本地数据库进行新增和修改等操作，
                     // 目的是让业务系统知道该用户已经注册到链上，并且业务系统可取得链上公钥证书，用于验证
